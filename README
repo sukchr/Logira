@@ -1,0 +1,4 @@
+Who reads those text log files anyway? Get your log output inserted into JIRA!
+
+This project aims at creating a simple C# client on top of the JIRA SOAP service as well as a log4net appender for JIRA. 
+
