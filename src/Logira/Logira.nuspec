@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>Logira</id>
+    <version>1.0</version>
+    <title>Logira</title>
+    <authors>sukchr</authors>
+    <owners>sukchr</owners>
+    <projectUrl>https://github.com/sukchr/logira</projectUrl>
+    <iconUrl>https://secure.gravatar.com/avatar/6ad24e3b848b0fbe347da7c229fcfad7</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A C# library on top of the JIRA SOAP service, including a JIRA log4net appender.</description>
+    <tags>logging jira</tags>
+  </metadata>
+</package>

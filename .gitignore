@@ -1,0 +1,13 @@
+packages/
+bin/
+obj/
+Debug/
+Release/
+test-results/
+*.user
+*.suo
+_ReSharper.*
+*.userprefs
+*.pidb
+.packages.config.swp
+*.nupkg
