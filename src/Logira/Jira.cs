@@ -14,6 +14,7 @@ namespace Logira
         internal static JiraSoapServiceService Service;
         internal static bool IsConfigured;
         private static readonly ILog Log = LogManager.GetLogger(typeof(Jira).FullName);
+        private const string SoapServiceUrl = "rpc/soap/jirasoapservice-v2";
         /// <summary>
         /// The maximum allowed length of the summary. The summary will be truncated if it is longer than this. The full summary will be 
         /// included in the issue description.
@@ -63,18 +64,18 @@ namespace Logira
         /// <summary>
         /// Invoke Configure to setup the JIRA connection. This method must be invoked before creating issues via <see cref="IssueBuilder"/>. 
         /// </summary>
-        /// <param name="url">The URL of the JIRA SOAP service. E.g. https://your-jira-site.com/jira/rpc/soap/jirasoapservice-v2.</param>
+        /// <param name="url">The URL of the JIRA SOAP service. E.g. https://your-jira-site.com</param>
         /// <param name="username">The username of the user to log into JIRA with.</param>
         /// <param name="password">The password of the user to log into JIRA with.</param>
         public static void Configure(string url, string username, string password)
         {
-            _url = url;
+            _url = url.EnsureTrailing("/") + SoapServiceUrl;
             _username = username;
             _password = password;
 
             IsConfigured = true;
             Service = new JiraSoapServiceService { Url = _url };
-            Log.DebugFormat("JIRA was configured with url, username, password: '{0}', '{1}', '{2}'", url, username, password.Mask());
+            Log.DebugFormat("JIRA was configured with url, username, password: '{0}', '{1}', '{2}'", _url, _username, _password.Mask());
         }
     }
 }
