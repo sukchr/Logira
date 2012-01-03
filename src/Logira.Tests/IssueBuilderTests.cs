@@ -72,6 +72,43 @@ namespace Logira.Tests
             Jira.Configure(jiraUrl, "user", "pass");
             issue.Url.ShouldBe(jiraUrl + "/browse/" + issue.Key);
         }
+
+        [Test]
+        public void Inner_exceptions_are_added_to_description()
+        {
+            try
+            {
+                throw new ArgumentException("inner inner");
+            }
+            catch (Exception innerInnerException)
+            {
+                try
+                {
+                    throw new ApplicationException("inner", innerInnerException);
+                }
+                catch (Exception innerException)
+                {
+                    try
+                    {
+                        throw new InvalidOperationException("outer", innerException);
+                    }
+                    catch (Exception outerException)
+                    {
+                        _builder
+                            .Project("TST")
+                            .Summary("Summary")
+                            .Description(outerException);
+
+                        var remoteIssue = _builder.CreateRemoteIssue();
+
+                        remoteIssue.description.ShouldContain(innerInnerException.Message);
+                        remoteIssue.description.ShouldContain(innerException.Message);
+                        remoteIssue.description.ShouldContain(outerException.Message);
+                    }
+                }
+            }
+        }
+
     }
 }
 

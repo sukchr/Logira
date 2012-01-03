@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using Brevity;
 using Logira.ServiceV2;
 
@@ -167,9 +168,46 @@ namespace Logira
 
             if (_exception != null)
             {
-                issue.description += "\n{code:title=Exception}$message$\n\n$stacktrace${code}"
-                    .Set("message", _exception.Message)
-                    .Set("stacktrace", _exception.StackTrace);
+                var message = new StringBuilder();
+                var stacktrace = new StringBuilder();
+
+                issue.description += "\n{code:title=Exception}\n";
+
+                message.Append(
+                    "$type$: $message$"
+                        .Set("type", _exception.GetType().FullName)
+                        .Set("message", _exception.Message));
+
+                if (_exception.StackTrace != null)
+                {
+                    stacktrace.AppendLine();
+                    stacktrace.Append(_exception.StackTrace);
+                }
+
+                var inner = _exception.InnerException;
+
+                while(inner != null)
+                {
+                    message.Append(
+                        " ---> $type$: $message$"
+                            .Set("type", inner.GetType().FullName)
+                            .Set("message", inner.Message));
+
+                    if (inner.StackTrace != null)
+                    {
+                        stacktrace.Insert(0, "\n   --- End of inner exception stack trace ---");
+                        stacktrace.Insert(0, inner.StackTrace);
+                        stacktrace.Insert(0, "\n");
+                    }
+
+                    inner = inner.InnerException;
+                }
+
+                message.AppendLine();
+
+                issue.description += message;
+                issue.description += stacktrace;
+                issue.description += "\n{code}";
             }
 
             if (_customFields.Count != 0)
