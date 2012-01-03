@@ -63,6 +63,15 @@ namespace Logira.Tests
             remoteIssue.summary.ShouldBe(summary.Truncate(Jira.MaxSummaryLength));
             remoteIssue.description.ShouldContain(summary);
         }
+
+        [Test]
+        public void Issue_has_correct_url()
+        {
+            var issue = new Issue("TST-123");
+            var jiraUrl = "http://the-jira-site.com";
+            Jira.Configure(jiraUrl, "user", "pass");
+            issue.Url.ShouldBe(jiraUrl + "/browse/" + issue.Key);
+        }
     }
 }
 

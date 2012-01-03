@@ -15,11 +15,13 @@ namespace Logira
         internal static bool IsConfigured;
         private static readonly ILog Log = LogManager.GetLogger(typeof(Jira).FullName);
         private const string SoapServiceUrl = "rpc/soap/jirasoapservice-v2";
+
         /// <summary>
         /// The maximum allowed length of the summary. The summary will be truncated if it is longer than this. The full summary will be 
         /// included in the issue description.
         /// </summary>
         public static int MaxSummaryLength = 50;
+        internal static string BrowseIssueUrl;
 
         internal static string GetToken()
         {
@@ -69,12 +71,14 @@ namespace Logira
         /// <param name="password">The password of the user to log into JIRA with.</param>
         public static void Configure(string url, string username, string password)
         {
-            _url = url.EnsureTrailing("/") + SoapServiceUrl;
+            _url = url;
             _username = username;
             _password = password;
 
+            BrowseIssueUrl = url.EnsureTrailing("/") + "browse/";
+
             IsConfigured = true;
-            Service = new JiraSoapServiceService { Url = _url };
+            Service = new JiraSoapServiceService { Url = url.EnsureTrailing("/") + SoapServiceUrl };
             Log.DebugFormat("JIRA was configured with url, username, password: '{0}', '{1}', '{2}'", _url, _username, _password.Mask());
         }
     }

@@ -64,6 +64,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigureTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="IssueBuilderTests.cs" />
     <Compile Include="JiraTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

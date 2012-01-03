@@ -10,6 +10,11 @@ namespace Logira
         /// </summary>
         public string Key { get; private set; }
 
+        public string Url
+        {
+            get { return Jira.BrowseIssueUrl + Key; }
+        }
+
         internal Issue(string key)
         {
             Key = key;
