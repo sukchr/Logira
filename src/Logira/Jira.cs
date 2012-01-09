@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Brevity;
 using Logira.ServiceV2;
 using log4net;
@@ -80,6 +81,40 @@ namespace Logira
             IsConfigured = true;
             Service = new JiraSoapServiceService { Url = url.EnsureTrailing("/") + SoapServiceUrl };
             Log.DebugFormat("JIRA was configured with url, username, password: '{0}', '{1}', '{2}'", _url, _username, _password.Mask());
+        }
+
+        public static RemoteVersion GetVersion(string projectKey, string versionName)
+        {
+            if (!IsConfigured)
+                throw new InvalidOperationException("JIRA is not configured");
+
+            if (Log.IsDebugEnabled)
+                Log.DebugFormat("Getting version: {0} -> {1}", projectKey, versionName);
+
+            var remoteVersion = Service.getVersions(GetToken(), projectKey); //TODO: add some caching
+
+            if (Log.IsDebugEnabled)
+                Log.DebugFormat("Response:\n{0}", remoteVersion.ToJson());
+
+            return remoteVersion.FirstOrDefault(version => string.Compare(version.name, versionName, StringComparison.InvariantCultureIgnoreCase) == 0);
+        }
+
+        public static RemoteVersion CreateVersion(string projectKey, string versionName)
+        {
+            if (!IsConfigured)
+                throw new InvalidOperationException("JIRA is not configured");
+
+            var remoteVersion = new RemoteVersion {name = versionName};
+
+            if (Log.IsDebugEnabled)
+                Log.DebugFormat("Creating version: {0}\n{1}", projectKey, remoteVersion.ToJson());
+            
+            remoteVersion = Service.addVersion(GetToken(), projectKey, remoteVersion);
+
+            if (Log.IsDebugEnabled)
+                Log.DebugFormat("Response:\n{0}", remoteVersion.ToJson());
+
+            return remoteVersion;
         }
     }
 }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using Brevity;
 using Logira.ServiceV2;
@@ -12,6 +14,7 @@ namespace Logira
     /// </summary>
     public class IssueBuilder
     {
+        #region fields
         private int _issueType;
         private string _summary;
         private Exception _exception;
@@ -19,7 +22,10 @@ namespace Logira
         private string _description;
         private readonly List<Tuple<string, string>> _attachments = new List<Tuple<string, string>>();
         private readonly List<Tuple<int, string[]>> _customFields = new List<Tuple<int, string[]>>();
+        private readonly List<string> _affectsVersionNames = new List<string>();
+        #endregion
 
+        #region issue "properties"
         /// <summary>
         /// Set the issue project key.
         /// </summary>
@@ -100,6 +106,32 @@ namespace Logira
         }
 
         /// <summary>
+        /// Set the name of the version that affects the issue. 
+        /// If the version doesn't exist, it is created. This requires that the JIRA user has administrator rights in the project. 
+        /// </summary>
+        /// <param name="versionName"></param>
+        /// <param name="additionalVersionNames"> </param>
+        /// <returns></returns>
+        public IssueBuilder AffectsVersion(string versionName, params string[] additionalVersionNames)
+        {
+            _affectsVersionNames.Add(versionName);
+            _affectsVersionNames.AddRange(additionalVersionNames);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Declare the name of the version by retrieving information from the executing assembly. 
+        /// If the version doesn't exist, it is created. This requires that the JIRA user has administrator rights in the project. 
+        /// </summary>
+        /// <returns></returns>
+        public VersionBuilder AffectsVersion()
+        {
+            return new VersionBuilder(Assembly.GetCallingAssembly(), this);
+        }
+        #endregion 
+
+        /// <summary>
         /// Create the issue.
         /// </summary>
         /// <returns>Returns the created issue. The issue will contain the generated issue key.</returns>
@@ -110,19 +142,35 @@ namespace Logira
             if (string.IsNullOrEmpty(_projectKey))
                 throw new InvalidOperationException("ProjectKey is required");
 
-            var remoteIssue = CreateRemoteIssue();
+            var remoteAffectsVersions = CreateAffectsVersions();
+            var remoteIssue = CreateRemoteIssue(remoteAffectsVersions);
             var remoteAttachments = CreateRemoteAttachments();
-            
+
             var token = Jira.GetToken();
-            
+
             remoteIssue = Jira.CreateIssue(token, remoteIssue);
-            
-            if(remoteAttachments != null)
+
+            if (remoteAttachments != null)
                 Jira.AddAttachments(token, remoteIssue, remoteAttachments);
-            
+
             return new Issue(remoteIssue.key);
         }
-        
+
+        /// <summary>
+        /// Gets the remote versions necessary for the affects versions. The versions are created if they don't exist. 
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<RemoteVersion> CreateAffectsVersions()
+        {
+            IEnumerable<RemoteVersion> remoteVersions = null;
+
+            if (_affectsVersionNames.Count != 0)
+                remoteVersions = _affectsVersionNames
+                    .Select(versionName => Jira.GetVersion(_projectKey, versionName) ?? Jira.CreateVersion(_projectKey, versionName));
+
+            return remoteVersions;
+        }
+
         /// <summary>
         /// Creates "remote" attachments based on the attachments set in the IssueBuilder. 
         /// </summary>
@@ -147,8 +195,9 @@ namespace Logira
         /// <summary>
         /// Creates a remote issue object based on the properties set in the IssueBuilder. 
         /// </summary>
+        /// <param name="remoteAffectsVersions"> </param>
         /// <returns></returns>
-        internal RemoteIssue CreateRemoteIssue()
+        internal RemoteIssue CreateRemoteIssue(IEnumerable<RemoteVersion> remoteAffectsVersions = null)
         {
             var issue = new RemoteIssue
                             {
@@ -166,6 +215,7 @@ namespace Logira
                     issue.description = issue.description.Insert(0, _summary + "\n\n");
             }
 
+            #region set description from exception
             if (_exception != null)
             {
                 var message = new StringBuilder();
@@ -186,7 +236,7 @@ namespace Logira
 
                 var inner = _exception.InnerException;
 
-                while(inner != null)
+                while (inner != null)
                 {
                     message.Append(
                         " ---> $type$: $message$"
@@ -209,6 +259,10 @@ namespace Logira
                 issue.description += stacktrace;
                 issue.description += "\n{code}";
             }
+            #endregion
+
+            if (remoteAffectsVersions != null)
+                issue.affectsVersions = remoteAffectsVersions.ToArray();
 
             if (_customFields.Count != 0)
             {
@@ -226,5 +280,110 @@ namespace Logira
 
             return issue;
         }
+      
+        #region versionbuilder
+        /// <summary>
+        /// Enables specifying how version name should be extracted from the assembly.
+        /// </summary>
+        public class VersionBuilder
+        {
+            private readonly Assembly _assembly;
+            private readonly IssueBuilder _issueBuilder;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="assembly">The calling assembly.</param>
+            /// <param name="issueBuilder"></param>
+            internal VersionBuilder(Assembly assembly, IssueBuilder issueBuilder)
+            {
+                _assembly = assembly;
+                _issueBuilder = issueBuilder;
+            }
+
+            /// <summary>
+            /// Use the entire informational version.
+            /// </summary>
+            /// <returns></returns>
+            public IssueBuilder AssemblyInformationalVersion()
+            {
+                return _issueBuilder.AffectsVersion(
+                    GetVersion<AssemblyInformationalVersionAttribute>(attribute => attribute.InformationalVersion));
+            }
+
+            /// <summary>
+            /// Specify what parts of the informational version to use. 
+            /// </summary>
+            /// <returns></returns>
+            public IssueBuilder AssemblyInformationalVersion(Func<Version, string> resolveVersionName)
+            {
+                return _issueBuilder.AffectsVersion(
+                    resolveVersionName(
+                        new Version(GetVersion<AssemblyInformationalVersionAttribute>(attribute => attribute.InformationalVersion))));
+            }
+
+            /// <summary>
+            /// Use the entire assembly version.
+            /// </summary>
+            /// <returns></returns>
+            public IssueBuilder AssemblyVersion()
+            {
+                return _issueBuilder.AffectsVersion(
+                    GetVersion<AssemblyVersionAttribute>(attribute => attribute.Version));
+            }
+
+            /// <summary>
+            /// Specify what parts of the assembly version to use. 
+            /// </summary>
+            /// <returns></returns>
+            public IssueBuilder AssemblyVersion(Func<Version, string> resolveVersionName)
+            {
+                return _issueBuilder.AffectsVersion(
+                    resolveVersionName(
+                        new Version(GetVersion<AssemblyVersionAttribute>(attribute => attribute.Version))));
+            }
+
+            /// <summary>
+            /// Use the entire file version.
+            /// </summary>
+            /// <returns></returns>
+            public IssueBuilder AssemblyFileVersion()
+            {
+                return _issueBuilder.AffectsVersion(
+                    GetVersion<AssemblyFileVersionAttribute>(attribute => attribute.Version));
+            }
+
+            /// <summary>
+            /// Specify what parts of the file version to use. 
+            /// </summary>
+            /// <returns></returns>
+            public IssueBuilder AssemblyFileVersion(Func<Version, string> resolveVersionName)
+            {
+                return _issueBuilder.AffectsVersion(
+                   resolveVersionName(
+                       new Version(GetVersion<AssemblyFileVersionAttribute>(attribute => attribute.Version))));
+            }
+
+            /// <summary>
+            /// Specify how version should be extracted from the executing assembly. 
+            /// </summary>
+            /// <param name="resolveVersionName"></param>
+            /// <returns></returns>
+            public IssueBuilder Assembly(Func<Assembly, string> resolveVersionName)
+            {
+                return _issueBuilder.AffectsVersion(resolveVersionName(_assembly));
+            }
+
+            private string GetVersion<TCustomAttribute>(Func<TCustomAttribute, string> getVersion) where TCustomAttribute : class
+            {
+                var attribute = _assembly.GetCustomAttribute<TCustomAttribute>();
+
+                if (attribute == null)
+                    throw new ArgumentException("Attribute {0} is not declared on assembly {1}".FormatWith(typeof(TCustomAttribute).FullName, _assembly.FullName));
+
+                return getVersion(attribute);
+            }
+        }
+        #endregion
     }
 }
