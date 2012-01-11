@@ -15,11 +15,7 @@ namespace Logira
 
         public string Render()
         {
-<<<<<<< HEAD
             return @"{quote}$quote${quote}"
-=======
-            return @"{quote}\n$quote$\n{quote}"
->>>>>>> 697f96607b2a4de5c254b3f5a51067316784419c
                 .Set("quote", Quote);
         }
     }
