@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Web;
 using Brevity;
 using Logira.ServiceV2;
 
@@ -23,6 +24,8 @@ namespace Logira
         private readonly List<Tuple<string, string>> _attachments = new List<Tuple<string, string>>();
         private readonly List<Tuple<int, string[]>> _customFields = new List<Tuple<int, string[]>>();
         private readonly List<string> _affectsVersionNames = new List<string>();
+        private StringBuilder _environment = new StringBuilder();
+
         #endregion
 
         #region issue "properties"
@@ -129,6 +132,18 @@ namespace Logira
         {
             return new VersionBuilder(Assembly.GetCallingAssembly(), this);
         }
+
+        /// <summary>
+        /// Set the environment for the issue. 
+        /// </summary>
+        /// <param name="environment"></param>
+        /// <returns></returns>
+        public IssueBuilder Environment(string environment)
+        {
+            _environment.AppendLine(environment);
+
+            return this;
+        }
         #endregion 
 
         /// <summary>
@@ -205,6 +220,7 @@ namespace Logira
                                 description = _description,
                                 project = _projectKey,
                                 type = _issueType == 0 ? IssueType.Bug.ToString(CultureInfo.InvariantCulture) : _issueType.ToString(CultureInfo.InvariantCulture),
+                                environment = _environment.ToString(),
                             };
 
             if (_summary.Length > Jira.MaxSummaryLength)
@@ -385,5 +401,71 @@ namespace Logira
             }
         }
         #endregion
+
+        /// <summary>
+        /// Set environment using info on the server or the client.
+        /// </summary>
+        /// <returns></returns>
+        public EnvironmentBuilder Environment()
+        {
+            return new EnvironmentBuilder(this);
+        }
+
+        /// <summary>
+        /// Set environment using info on the server or the client.
+        /// </summary>
+        public class EnvironmentBuilder
+        {
+            private readonly IssueBuilder _issueBuilder;
+
+            public EnvironmentBuilder(IssueBuilder issueBuilder)
+            {
+                _issueBuilder = issueBuilder;
+            }
+
+            /// <summary>
+            /// Adds info from <see cref="System.Environment"/> to the issue's environment.
+            /// </summary>
+            public IssueBuilder FromServer()
+            {
+                _issueBuilder._environment.AppendLine("************ Server ************");
+                _issueBuilder._environment.AppendLine("\tCommandLine: " + System.Environment.CommandLine);
+                _issueBuilder._environment.AppendLine("\tCurrentDirectory: " + System.Environment.CurrentDirectory);
+                _issueBuilder._environment.AppendLine("\tIs64BitOperatingSystem: " + System.Environment.Is64BitOperatingSystem);
+                _issueBuilder._environment.AppendLine("\tIs64BitProcess: " + System.Environment.Is64BitProcess);
+                _issueBuilder._environment.AppendLine("\tMachineName: " + System.Environment.MachineName);
+                _issueBuilder._environment.AppendLine("\tOSVersion: " + System.Environment.OSVersion);
+                _issueBuilder._environment.AppendLine("\tProcessorCount: " + System.Environment.ProcessorCount);
+                _issueBuilder._environment.AppendLine("\tSystemDirectory: " + System.Environment.SystemDirectory);
+                _issueBuilder._environment.AppendLine("\tSystemPageSize: " + System.Environment.SystemPageSize);
+                _issueBuilder._environment.AppendLine("\tTickCount: " + System.Environment.TickCount);
+                _issueBuilder._environment.AppendLine("\tUserDomainName: " + System.Environment.UserDomainName);
+                _issueBuilder._environment.AppendLine("\tUserInteractive: " + System.Environment.UserInteractive);
+                _issueBuilder._environment.AppendLine("\tUserName: " + System.Environment.UserName);
+                _issueBuilder._environment.AppendLine("\tVersion: " + System.Environment.Version);
+                _issueBuilder._environment.AppendLine("\tWorkingSet: " + System.Environment.WorkingSet);
+
+                return _issueBuilder;
+            }
+
+            /// <summary>
+            /// Adds info from <see cref="HttpRequest"/> to the issue's environment.
+            /// </summary>
+            public IssueBuilder FromClient(HttpRequest request = null)
+            {
+                if(request == null)
+                {
+                    if (System.Web.HttpContext.Current != null)
+                        request = System.Web.HttpContext.Current.Request;
+                    else
+                        throw new ArgumentException("Request is neither specified as argument nor found in the current HttpContext.");
+                }
+
+                _issueBuilder._environment.AppendLine("************ Client ************");
+                _issueBuilder._environment.AppendLine(request.ToJson());
+
+                return _issueBuilder;
+            }
+        }
     }
 }

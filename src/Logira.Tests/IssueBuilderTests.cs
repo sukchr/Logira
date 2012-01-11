@@ -65,6 +65,33 @@ namespace Logira.Tests
         }
 
         [Test]
+        public void Environment_is_set()
+        {
+            const string environment = "the environment";
+            _builder
+                .Summary("test")
+                .Project("test")
+                .Environment(environment);
+
+            var remoteIssue = _builder.CreateRemoteIssue();
+
+            remoteIssue.environment.ShouldBe(environment);
+        }
+
+        [Test]
+        public void Environment_is_set_from_server()
+        {
+            _builder
+                .Summary("test")
+                .Project("test")
+                .Environment().FromServer();
+
+            var remoteIssue = _builder.CreateRemoteIssue();
+
+            remoteIssue.environment.ShouldContain(Environment.CurrentDirectory);
+        }
+
+        [Test]
         public void Issue_has_correct_url()
         {
             var issue = new Issue("TST-123");
@@ -108,7 +135,6 @@ namespace Logira.Tests
                 }
             }
         }
-
     }
 }
 
