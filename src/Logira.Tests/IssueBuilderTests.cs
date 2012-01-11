@@ -145,8 +145,13 @@ namespace Logira.Tests
 
             var remoteIssue = _builder.CreateRemoteIssue();
 
+<<<<<<< HEAD
             remoteIssue.description.ShouldContain(@"{code:title=some title}some code{code}");
             remoteIssue.description.ShouldContain(@"{quote}some quote{quote}");
+=======
+            remoteIssue.description.ShouldContain(@"{code:title=some title}\nsome code\n{code}");
+            remoteIssue.description.ShouldContain(@"{quote}\nsome quote\n{quote}");
+>>>>>>> 697f96607b2a4de5c254b3f5a51067316784419c
         }
     }
 }

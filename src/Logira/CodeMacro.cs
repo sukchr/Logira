@@ -18,7 +18,11 @@ namespace Logira
 
         public string Render()
         {
+<<<<<<< HEAD
             return @"{code:title=$title$}$code${code}"
+=======
+            return @"{code:title=$title$}\n$code$\n{code}"
+>>>>>>> 697f96607b2a4de5c254b3f5a51067316784419c
                 .Set("title", Title)
                 .Set("code", Code);
         }

@@ -14,7 +14,11 @@ namespace Logira
 
         public string Render()
         {
+<<<<<<< HEAD
             return @"{html}$contents${html}"
+=======
+            return @"{html}\n$contents$\n{html}"
+>>>>>>> 697f96607b2a4de5c254b3f5a51067316784419c
                 .Set("contents", Contents);
         }
     }
