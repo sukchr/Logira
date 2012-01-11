@@ -20,11 +20,11 @@ namespace Logira
         private string _summary;
         private Exception _exception;
         private string _projectKey;
-        private StringBuilder _description = new StringBuilder();
+        private readonly StringBuilder _description = new StringBuilder();
         private readonly List<Tuple<string, string>> _attachments = new List<Tuple<string, string>>();
         private readonly List<Tuple<int, string[]>> _customFields = new List<Tuple<int, string[]>>();
         private readonly List<string> _affectsVersionNames = new List<string>();
-        private StringBuilder _environment = new StringBuilder();
+        private readonly StringBuilder _environment = new StringBuilder();
 
         #endregion
 
@@ -81,6 +81,19 @@ namespace Logira
         public IssueBuilder Description(Exception exception)
         {
             _exception = exception;
+            return this;
+        }
+
+        /// <summary>
+        /// Adds the given macro to the description. The macro is rendered immediately. 
+        /// </summary>
+        /// <typeparam name="TMacro"></typeparam>
+        /// <param name="macro"></param>
+        /// <returns></returns>
+        public IssueBuilder Description<TMacro>(TMacro macro) where TMacro : class, IMacro
+        {
+            _description.AppendLine(macro.Render());
+
             return this;
         }
 
@@ -466,19 +479,6 @@ namespace Logira
 
                 return _issueBuilder;
             }
-        }
-
-        /// <summary>
-        /// Adds the given macro to the description. The macro is rendered immediately. 
-        /// </summary>
-        /// <typeparam name="TMacro"></typeparam>
-        /// <param name="macro"></param>
-        /// <returns></returns>
-        public IssueBuilder Description<TMacro>(TMacro macro) where TMacro : class, IMacro
-        {
-            _description.AppendLine(macro.Render());
-
-            return this;
-        }
+        }     
     }
 }
