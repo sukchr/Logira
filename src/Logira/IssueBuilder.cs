@@ -20,7 +20,7 @@ namespace Logira
         private string _summary;
         private Exception _exception;
         private string _projectKey;
-        private string _description;
+        private StringBuilder _description = new StringBuilder();
         private readonly List<Tuple<string, string>> _attachments = new List<Tuple<string, string>>();
         private readonly List<Tuple<int, string[]>> _customFields = new List<Tuple<int, string[]>>();
         private readonly List<string> _affectsVersionNames = new List<string>();
@@ -69,7 +69,7 @@ namespace Logira
         /// <returns></returns>
         public IssueBuilder Description(string description)
         {
-            _description = description;
+            _description.AppendLine(description);
             return this;
         }
 
@@ -144,7 +144,7 @@ namespace Logira
 
             return this;
         }
-        #endregion 
+        #endregion
 
         /// <summary>
         /// Create the issue.
@@ -217,13 +217,13 @@ namespace Logira
             var issue = new RemoteIssue
                             {
                                 summary = _summary.Truncate(Jira.MaxSummaryLength),
-                                description = _description,
+                                description = _description.ToString(),
                                 project = _projectKey,
                                 type = _issueType == 0 ? IssueType.Bug.ToString(CultureInfo.InvariantCulture) : _issueType.ToString(CultureInfo.InvariantCulture),
                                 environment = _environment.ToString(),
                             };
 
-            if (_summary.Length > Jira.MaxSummaryLength)
+            if (_summary != null && _summary.Length > Jira.MaxSummaryLength)
             {
                 if (string.IsNullOrEmpty(issue.description)) //description not already set
                     issue.description = _summary;
@@ -296,7 +296,7 @@ namespace Logira
 
             return issue;
         }
-      
+
         #region versionbuilder
         /// <summary>
         /// Enables specifying how version name should be extracted from the assembly.
@@ -418,7 +418,7 @@ namespace Logira
         {
             private readonly IssueBuilder _issueBuilder;
 
-            public EnvironmentBuilder(IssueBuilder issueBuilder)
+            internal EnvironmentBuilder(IssueBuilder issueBuilder)
             {
                 _issueBuilder = issueBuilder;
             }
@@ -453,10 +453,10 @@ namespace Logira
             /// </summary>
             public IssueBuilder FromClient(HttpRequest request = null)
             {
-                if(request == null)
+                if (request == null)
                 {
-                    if (System.Web.HttpContext.Current != null)
-                        request = System.Web.HttpContext.Current.Request;
+                    if (HttpContext.Current != null)
+                        request = HttpContext.Current.Request;
                     else
                         throw new ArgumentException("Request is neither specified as argument nor found in the current HttpContext.");
                 }
@@ -466,6 +466,19 @@ namespace Logira
 
                 return _issueBuilder;
             }
+        }
+
+        /// <summary>
+        /// Adds the given macro to the description. The macro is rendered immediately. 
+        /// </summary>
+        /// <typeparam name="TMacro"></typeparam>
+        /// <param name="macro"></param>
+        /// <returns></returns>
+        public IssueBuilder Description<TMacro>(TMacro macro) where TMacro : class, IMacro
+        {
+            _description.AppendLine(macro.Render());
+
+            return this;
         }
     }
 }

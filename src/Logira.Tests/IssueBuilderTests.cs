@@ -135,6 +135,19 @@ namespace Logira.Tests
                 }
             }
         }
+
+        [Test]
+        public void Rich_text_with_macros()
+        {
+            _builder
+                .Description(new CodeMacro {Code = "some code", Title = "some title"})
+                .Description(new QuoteMacro {Quote = "some quote"});
+
+            var remoteIssue = _builder.CreateRemoteIssue();
+
+            remoteIssue.description.ShouldContain(@"{code:title=some title}\nsome code\n{code}");
+            remoteIssue.description.ShouldContain(@"{quote}\nsome quote\n{quote}");
+        }
     }
 }
 
