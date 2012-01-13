@@ -75,10 +75,10 @@ namespace Logira
 
             var service = new JiraSoapServiceService { Url = Url };
             var token = service.login(Username, Password);
-            LogLog.Debug(typeof(JiraAppender), string.Format("Sending request to JIRA: {0}", issue.ToJson()));
+            LogLog.Debug(string.Format("Sending request to JIRA: {0}", issue.ToJson()));
             var returnedIssue = service.createIssue(token, issue);
-            LogLog.Debug(typeof(JiraAppender), string.Format("Got response from JIRA: {0}", returnedIssue.ToJson()));
-            LogLog.Debug(typeof(JiraAppender), string.Format("Created issue: {0}", returnedIssue.key));
+            LogLog.Debug(string.Format("Got response from JIRA: {0}", returnedIssue.ToJson()));
+            LogLog.Debug(string.Format("Created issue: {0}", returnedIssue.key));
         }
     }
 }
