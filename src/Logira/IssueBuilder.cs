@@ -247,15 +247,10 @@ namespace Logira
             #region set description from exception
             if (_exception != null)
             {
-                var message = new StringBuilder();
+                var message = _exception.GetAllMessages();
                 var stacktrace = new StringBuilder();
 
                 issue.description += "\n{code:title=Exception}\n";
-
-                message.Append(
-                    "$type$: $message$"
-                        .Set("type", _exception.GetType().FullName)
-                        .Set("message", _exception.Message));
 
                 if (_exception.StackTrace != null)
                 {
@@ -267,11 +262,6 @@ namespace Logira
 
                 while (inner != null)
                 {
-                    message.Append(
-                        " ---> $type$: $message$"
-                            .Set("type", inner.GetType().FullName)
-                            .Set("message", inner.Message));
-
                     if (inner.StackTrace != null)
                     {
                         stacktrace.Insert(0, "\n   --- End of inner exception stack trace ---");
@@ -282,9 +272,7 @@ namespace Logira
                     inner = inner.InnerException;
                 }
 
-                message.AppendLine();
-
-                issue.description += message;
+                issue.description += message + "\n";
                 issue.description += stacktrace;
                 issue.description += "\n{code}";
             }
