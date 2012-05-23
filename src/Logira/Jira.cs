@@ -116,5 +116,29 @@ namespace Logira
 
             return remoteVersion;
         }
+
+        public static RemoteComponent GetComponent(string projectKey, string componentName)
+        {
+            if (!IsConfigured)
+                throw new InvalidOperationException("JIRA is not configured");
+
+            if (Log.IsDebugEnabled)
+                Log.DebugFormat("Getting component: {0} -> {1}", projectKey, componentName);
+
+            var remoteComponents = Service.getComponents(GetToken(), projectKey); //TODO: add some caching
+
+            if (Log.IsDebugEnabled)
+                Log.DebugFormat("Response:\n{0}", remoteComponents.ToJson());
+
+            return remoteComponents.FirstOrDefault(component => string.Compare(component.name, componentName, StringComparison.InvariantCultureIgnoreCase) == 0);
+        }
+
+        public static RemoteComponent CreateComponent(string projectKey, string componentName)
+        {
+            if (!IsConfigured)
+                throw new InvalidOperationException("JIRA is not configured");
+
+           throw new NotSupportedException("The JIRA SOAP service doesn't support creating components. Cannot create component " + componentName + " in project " + projectKey);
+        }
     }
 }

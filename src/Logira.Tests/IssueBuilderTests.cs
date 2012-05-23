@@ -15,7 +15,7 @@ namespace Logira.Tests
         [TestFixtureSetUp]
         public void TestFixtureSetup()
         {
-            Jira.Configure("http://the-jira-site.com", "user", "pass");
+            Jira.Configure("your jira site", "user", "pass");
         }
 
         [SetUp]
@@ -89,6 +89,17 @@ namespace Logira.Tests
             var remoteIssue = _builder.CreateRemoteIssue();
 
             remoteIssue.environment.ShouldContain(Environment.CurrentDirectory);
+        }
+
+        [Test]
+        public void Creating_component_is_nut_supported_by_soap_service()
+        {
+            _builder
+                .Summary("test")
+                .Project("test")
+                .Component("test component foo");
+
+            Should.Throw<NotSupportedException>(() => _builder.CreateRemoteComponents());
         }
 
         [Test]

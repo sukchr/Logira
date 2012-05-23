@@ -24,6 +24,7 @@ namespace Logira
         private readonly List<Tuple<string, string>> _attachments = new List<Tuple<string, string>>();
         private readonly List<Tuple<int, string[]>> _customFields = new List<Tuple<int, string[]>>();
         private readonly List<string> _affectsVersionNames = new List<string>();
+        private readonly List<string> _componentNames = new List<string>();
         private readonly StringBuilder _environment = new StringBuilder();
 
         #endregion
@@ -147,6 +148,21 @@ namespace Logira
         }
 
         /// <summary>
+        /// Set the name of the component.
+        /// If the component doesn't exist, it is created. This requires that the JIRA user has administrator rights in the project. 
+        /// </summary>
+        /// <param name="componentName"></param>
+        /// <param name="additionalComponentNames"> </param>
+        /// <returns></returns>
+        public IssueBuilder Component(string componentName, params string[] additionalComponentNames)
+        {
+            _componentNames.Add(componentName);
+            _componentNames.AddRange(additionalComponentNames);
+
+            return this;
+        }
+
+        /// <summary>
         /// Set the environment for the issue. 
         /// </summary>
         /// <param name="environment"></param>
@@ -197,6 +213,32 @@ namespace Logira
                     .Select(versionName => Jira.GetVersion(_projectKey, versionName) ?? Jira.CreateVersion(_projectKey, versionName));
 
             return remoteVersions;
+        }
+
+        /// <summary>
+        /// Gets the remote components necessary for the components. The components are created if they don't exist. 
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<RemoteComponent> CreateRemoteComponents()
+        {
+            var remoteComponents = new List<RemoteComponent>();
+
+            if (_componentNames.Count != 0)
+                foreach (var componentName in _componentNames)
+                {
+                    var remoteComponent = Jira.GetComponent(_projectKey, componentName);
+
+                    if(remoteComponent == null)
+                    {
+                        remoteComponent = Jira.CreateComponent(_projectKey, componentName);
+                    }
+                    
+                    remoteComponents.Add(remoteComponent);
+                }
+                //remoteComponents = _componentNames
+                //    .Select(componentName => Jira.GetComponent(_projectKey, componentName) ?? Jira.CreateComponent(_projectKey, componentName));
+
+            return remoteComponents;
         }
 
         /// <summary>
@@ -466,6 +508,6 @@ namespace Logira
 
                 return _issueBuilder;
             }
-        }     
+        }
     }
 }
