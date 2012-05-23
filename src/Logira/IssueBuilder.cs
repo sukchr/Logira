@@ -462,8 +462,7 @@ namespace Logira
                         throw new ArgumentException("Request is neither specified as argument nor found in the current HttpContext.");
                 }
 
-                _issueBuilder._environment.AppendLine("************ Client ************");
-                _issueBuilder._environment.AppendLine(request.ToJson());
+                _issueBuilder._environment.AppendLine(request.UserAgent);
 
                 return _issueBuilder;
             }
