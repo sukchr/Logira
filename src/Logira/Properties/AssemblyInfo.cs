@@ -8,5 +8,3 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("Logira")]
 [assembly: ComVisible(false)]
 [assembly: Guid("367deb7f-de0d-445a-8e66-3afc50778924")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]

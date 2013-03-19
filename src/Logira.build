@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="Logira" default="release">
+    <property name="debug" value="false"/>
+    <property name="msbuild.configuration" value="Release"/>
+	
+	<property name="isdirty" value="false" />
+	<property name="isRelease" value="false" />	
+	
+    <!-- executable properties -->
+	<property name="executable.git" value="${environment::get-variable('git.exe')}" />
+    <property name="executable.nunit" value="${environment::get-variable('nunit_home')}\bin\nunit-console.exe" />
+    <property name="executable.msbuild" value="${environment::get-variable('msbuild4')}" />
+    <property name="executable.nuget" value="${environment::get-variable('nuget_home')}\NuGet.exe" />
+
+    <!-- *************************************************************************************** -->
+    <!-- release                                                                                 -->
+    <!-- *************************************************************************************** -->
+    <target name="release">
+	   <property name="isRelease" value="true" />	
+	   <call target="build" cascade="true"/>
+	   <call target="publish-nuget" cascade="false" />
+	</target>
+
+    <!-- *************************************************************************************** -->
+    <!-- version                                                                                 -->
+    <!-- *************************************************************************************** -->
+    <target name="version" description="Generate AssemblyInfo.cs with correct version number.">
+		<!-- get latest tag name -->
+		<exec program="${executable.git}" commandline='describe --dirty=-DIRTY' resultproperty="version" output="version.txt"/>
+		<loadfile file="version.txt" property="version" />
+		<property name="version" value="${string::trim(version)}" />
+		<delete file="version.txt" />
+
+		<if test="${string::index-of(version, '-DIRTY') != -1}"> <!-- if tag contains (-DIRTY) we set the isDirty property to true to disable publish -->
+			<property name="isdirty" value="true" />			
+			<fail if="${isRelease}" message="Cannot release when there are local uncommited changes. Commit or revert before doing a release." />
+		</if>
+	  
+		<echo>Version is '${version}'</echo>
+
+		<choose>
+			<when test="${string::index-of(version, '-') != -1}"> <!-- if tag contains hyphen (-) we need to filter out the prerelase name -->
+				<property name="fileversion" value="${string::substring(version, 0, string::index-of(version, '-'))}.0"/>
+				<property name="isprerelease" value="true" />
+			</when>
+			<otherwise> <!-- if tag does not contain hyphen (-) we can use the entire tag name -->
+				<property name="fileversion" value="${version}.0"/>
+				<property name="isprerelease" value="false" />
+			</otherwise>
+		</choose>
+		
+        <!-- version info -->
+        <asminfo output="Logira\Properties\VersionInfo.cs" language="CSharp">
+            <imports>
+                <import namespace="System.Reflection" />
+            </imports>
+            <attributes>
+                <attribute type="AssemblyVersionAttribute" value="${fileversion}" />
+				<attribute type="AssemblyFileVersionAttribute" value="${fileversion}" />
+                <attribute type="AssemblyInformationalVersionAttribute" value="${version}" />
+            </attributes>
+        </asminfo>
+    </target>
+
+    <!-- *************************************************************************************** -->
+    <!-- build                                                                                   -->
+    <!-- *************************************************************************************** -->
+    <target name="build" description="Compile the application." depends="version">
+        <!-- compile -->
+        <exec program="${executable.msbuild}">
+            <arg value="Logira/Logira.csproj" />
+            <arg value="/target:rebuild" />
+            <arg value="/property:Configuration=${msbuild.configuration}" />
+        </exec>
+    </target>
+
+    <!-- *************************************************************************************** -->
+    <!-- test                                                                                    -->
+    <!-- *************************************************************************************** -->
+    <target name="test" description="Compile and run the unit tests.">
+		<!-- compile the test project -->
+		<exec program="${executable.msbuild}" failonerror="false">
+			<arg value="Logira.Tests\Logira.Tests.csproj" />
+			<arg value="/target:rebuild" />
+			<arg value="/property:Configuration=${msbuild.configuration}" />
+		</exec>
+
+		<mkdir dir="TestResults/" failonerror="false"/>
+
+		<exec
+		   program="${executable.nunit}"
+		   commandline="Logira.Tests/Logira.Tests.csproj /result:TestResults\Logira.TestResult.xml"
+		   failonerror="true"/>
+    </target>
+    
+	<!-- *************************************************************************************** -->
+    <!-- publish-nuget                                                                           -->
+    <!-- *************************************************************************************** -->
+    <target name="publish-nuget" description="Publish a NuGet package" depends="build">
+		<fail if="${isdirty}" message="Found local uncommited changes. Commit or revert before doing a publish."/>	
+		<exec program="${executable.nuget}" commandline='pack "Logira\Logira.csproj" -OutputDirectory Logira -Prop Configuration=Release' />
+		<exec program="${executable.nuget}" commandline='push "Logira\Logira.${version}.nupkg"'/>
+		<delete file="Logira\Logira.${version}.nupkg" />
+    </target>
+</project>

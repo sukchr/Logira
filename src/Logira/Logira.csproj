@@ -80,6 +80,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Properties\VersionInfo.cs" />
     <Compile Include="QuoteMacro.cs" />
     <Compile Include="Web References\ServiceV2\Reference.cs">
       <AutoGen>True</AutoGen>

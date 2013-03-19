@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>Logira</id>
-    <version>1.11</version>
+    <version>$version$</version>
     <title>Logira</title>
     <authors>sukchr</authors>
     <owners>sukchr</owners>
@@ -11,5 +11,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A C# library on top of the JIRA SOAP service, including a JIRA log4net appender.</description>
     <tags>logging jira</tags>
+    <references>
+      <reference file="Logira.dll" />
+    </references>	
   </metadata>
 </package>
