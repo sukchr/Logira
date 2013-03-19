@@ -11,3 +11,4 @@ _ReSharper.*
 *.pidb
 .packages.config.swp
 *.nupkg
+VersionInfo.cs
