@@ -13,7 +13,7 @@ namespace Logira
     {
         private static string _username, _password, _url;
         internal static JiraSoapServiceService Service;
-        internal static bool IsConfigured;
+	    private static bool _isConfigured;
         private static readonly ILog Log = LogManager.GetLogger(typeof(Jira).FullName);
         private const string SoapServiceUrl = "rpc/soap/jirasoapservice-v2";
 
@@ -23,6 +23,14 @@ namespace Logira
         /// </summary>
         public static int MaxSummaryLength = 50;
         internal static string BrowseIssueUrl;
+
+		/// <summary>
+		/// True if <see cref="Configure"/> has been invoked successfully.
+		/// </summary>
+	    public static bool IsConfigured
+	    {
+		    get { return _isConfigured; }
+	    }
 
         internal static string GetToken()
         {
@@ -78,7 +86,7 @@ namespace Logira
 
             BrowseIssueUrl = url.EnsureTrailing("/") + "browse/";
 
-            IsConfigured = true;
+            _isConfigured = true;
             Service = new JiraSoapServiceService { Url = url.EnsureTrailing("/") + SoapServiceUrl };
             Log.DebugFormat("JIRA was configured with url, username, password: '{0}', '{1}', '{2}'", _url, _username, _password.Mask());
         }
