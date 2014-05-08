@@ -1,4 +1,4 @@
-﻿using Brevity;
+﻿using Brevity.StringTemplate;
 
 namespace Logira
 {
