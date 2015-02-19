@@ -2,7 +2,7 @@
 using System.Linq;
 using Brevity;
 using Logira.ServiceV2;
-using log4net;
+using Common.Logging;
 
 namespace Logira
 {
