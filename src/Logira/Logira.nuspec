@@ -9,7 +9,7 @@
     <projectUrl>https://github.com/sukchr/logira</projectUrl>
     <iconUrl>https://secure.gravatar.com/avatar/6ad24e3b848b0fbe347da7c229fcfad7</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A C# library on top of the JIRA SOAP service, including a JIRA log4net appender.</description>
+    <description>A C# library on top of the JIRA SOAP service.</description>
     <tags>logging jira</tags>
     <references>
       <reference file="Logira.dll" />
