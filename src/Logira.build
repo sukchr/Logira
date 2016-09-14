@@ -11,7 +11,8 @@
     <property name="executable.nunit" value="${environment::get-variable('nunit_home')}\bin\nunit-console.exe" />
     <property name="executable.msbuild" value="${environment::get-variable('msbuild4')}" />
     <property name="executable.nuget" value="${environment::get-variable('nuget_home')}\NuGet.exe" />
-
+	<property name="nuget.source" value="https://www.nuget.org"/>
+	
     <!-- *************************************************************************************** -->
     <!-- release                                                                                 -->
     <!-- *************************************************************************************** -->
@@ -99,7 +100,7 @@
     <target name="publish-nuget" description="Publish a NuGet package" depends="build">
 		<fail if="${isdirty}" message="Found local uncommited changes. Commit or revert before doing a publish."/>	
 		<exec program="${executable.nuget}" commandline='pack "Logira\Logira.csproj" -OutputDirectory Logira -Prop Configuration=Release' />
-		<exec program="${executable.nuget}" commandline='push "Logira\Logira.${version}.nupkg"'/>
+		<exec program="${executable.nuget}" commandline='push "Logira\Logira.${version}.nupkg" -source ${nuget.source}'/>
 		<delete file="Logira\Logira.${version}.nupkg" />
     </target>
 </project>
